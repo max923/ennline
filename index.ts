@@ -34,7 +34,7 @@ interface LineConfig {
       Line: {
         channelId: process.env.channelId,
         channelSecret: process.env.channelSecret,
-        channelAccessToken: process.env.channelSecret,
+        channelAccessToken: process.env.channelAccessToken,
       } as LineConfig
     }
     console.log('production config', config)
