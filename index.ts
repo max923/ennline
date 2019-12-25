@@ -37,6 +37,7 @@ interface LineConfig {
         channelAccessToken: process.env.channelSecret,
       } as LineConfig
     }
+    console.log('production config', config)
     // create LINE SDK client
     client = new Client(config.Line);
     app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
