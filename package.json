@@ -4,7 +4,8 @@
   "description": "Learning English in Line chatbot",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec ./node_modules/.bin/ts-node ./index.ts",
+    "dev": "NODE_ENV=development nodemon --exec ./node_modules/.bin/ts-node ./index.ts",
+    "start": "NODE_ENV=production nodemon --exec ./node_modules/.bin/ts-node ./index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "share": "ngrok http 3000"
   },
