@@ -1,6 +1,9 @@
 import request from 'superagent'
 import config from '../config'
-function definition(word: string): Promise<any> {
+function definition(word: string): Promise<{
+  word: string,
+  zhTW: string,
+} | null> {
   try {
     return (
       request
@@ -11,8 +14,26 @@ function definition(word: string): Promise<any> {
   } catch (error) {    
     return new Promise((resolve) => resolve(null))
   }
+}
 
+function search(word: string): Promise<{
+  word: string,
+  examples: string[],
+  voice: string,
+  def: string,
+} | null> {
+  try {
+    return (
+      request
+      .get(`${config.Api.domain}/api/search?word=${word}`)
+      .then(({ body }) => body)
+      .catch(() => null)
+    )
+  } catch (error) {
+    return new Promise((resolve) => resolve(null))
+  }
 }
 export default {
-  definition
+  definition,
+  search
 }

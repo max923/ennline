@@ -1,21 +1,31 @@
 import firebase from 'firebase'
-import request from 'superagent'
 import { isEmpty, get } from 'lodash'
 import config from '../config'
-
-interface _self {
-  db: any;
-  userRootNode: string;
-  userId: string
+import calcRandom from '../utils/calcRandom'
+import { _self, Snapshot, Vocabulary } from './interface'
+import today from './helper/today'
+/**
+ * Check the user whether is in the DB
+*/
+function isUserExist(
+  this: _self,
+):Promise<boolean> {
+  const getUserNodeValue = () => {
+    return new Promise((resolve, reject) => {
+      try {
+        this.db.ref(this.userRootNode).once('value', (snapshot: Snapshot) => {
+          resolve(snapshot.val())
+        });
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+  const result = async () => !isEmpty(await getUserNodeValue())
+  return result()
 }
-interface Snapshot {
-  val(): {
-    [key: string]: any
-  },
-  numChildren(): number,
-}
 
-function getWordNodeValue(
+function getNodeValueByWord(
   this: _self,
   vocabulary: string
 ):Promise<any> {
@@ -85,32 +95,83 @@ function getRandomNode(
       }
     })
   }
-
   return {
     overWeightNode: getByOverWeight,
     oneWeight: getByOneWeight
   }
 }
-
 /**
- * 
- * @param db A firsebase Databse
- * @param userId A user unique string id from Line chat room
+ * Set the user daily quiz
  */
-function getUserNodeValue(
-  db: any,
-  userRootNode: string
-):Promise<object> {
-  return new Promise((resolve, reject) => {
+function setUserDailyQuiz(
+  this: _self,
+):Promise<any>{
+  const todayQuestions = (count: number) => {
+    const nodeList = calcRandom(count).map(num => num === 0 ? this.getRandomNode().overWeightNode(): this.getRandomNode().oneWeight())
+    return Promise.all(nodeList)
+  }
+  const todayQuizData = async (date: string) => {
+    return {
+      [date]: {
+        questions: await todayQuestions(20),
+        currentNum: 0,
+        score: 0
+      }
+    }
+  }
+  return new Promise(async (resolve, reject) => {
     try {
-      db.ref(userRootNode).once('value', (snapshot: Snapshot) => {
-        resolve(snapshot.val())
-      });
+      this.db.ref(`/dailyQuiz/${this.userId}`).set(await todayQuizData(today()), function() {
+        resolve(todayQuizData(today()))
+      })
     } catch (error) {
       reject(error)
     }
   })
 }
+function isDailyQuizExist(
+  this: _self,
+):Promise<boolean> {
+  const getUserDailyQuizValue = () => {
+    return new Promise((resolve, reject) => {
+      try {
+        this.db.ref(`/dailyQuiz/${this.userId}/${today()}`).once('value', (snapshot: Snapshot) => {
+          resolve(snapshot.val())
+        });
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+  const result = async () => !isEmpty(await getUserDailyQuizValue())
+  return result()
+}
+function setNewWord(
+  this: _self,
+  data: Vocabulary
+):Promise<any> {
+  return new Promise((resolve, reject) => {
+    const { word, def, zhTW, voice, examples } = data
+    try {
+      this.db.ref(`${this.userRootNode}/${word}`).set({
+        word,
+        description: def,
+        ex: examples,
+        translate: {  zhTW },
+        audio: {  url: voice },
+        weight: 1,
+        time: +new Date()
+      })
+      resolve({
+        data,
+        status: 'SUCCESS'
+      })
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
 function createFirsebase() {
   /**
    * Init firsebase
@@ -119,24 +180,18 @@ function createFirsebase() {
   const db = firebase.database();
 
   return function(userId: string) {
-    /**
-     * Check the user is in the DB
-    */
     const userRootNode = `/${userId}`
-    async function isUserExist (
-      this: _self
-    ): Promise<boolean> {
-      const userNodeValue = await getUserNodeValue(this.db, this.userRootNode)
-      return !isEmpty(userNodeValue)
-    }
     return {
       db,
       userId,
       userRootNode,
       isUserExist,
-      getWordNodeValue,
+      getNodeValueByWord,
       getSetting,
       getRandomNode,
+      isDailyQuizExist,
+      setUserDailyQuiz,
+      setNewWord,
     }
   }
 }
