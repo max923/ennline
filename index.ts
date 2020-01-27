@@ -7,10 +7,15 @@ import replyMessageTemplate from './replyMessage'
 import firsebase from './firsebase/index'
 import fetch from './helper/fetch'
 import { calcRandom, paramsToObject } from './utils/index'
-import __config, { LineConfig } from './config'
 import messageMotion from './const'
 
-function getConfig(process: any) {
+function getConfig(process: any): {
+  Line: {
+    channelId: string,
+    channelSecret: string,
+    channelAccessToken: string,
+  }
+}{
   if(process.NODE_ENV === 'production') {
     const {channelId, channelSecret, channelAccessToken} = process.env
     const config = {
@@ -18,11 +23,17 @@ function getConfig(process: any) {
         channelId,
         channelSecret,
         channelAccessToken,
-      } as LineConfig
+      }
     }
     return config
   }
-  return __config
+  return {
+    Line: {
+      channelId: '',
+      channelSecret: '',
+      channelAccessToken: ''
+    }
+  }
 }
 
 
