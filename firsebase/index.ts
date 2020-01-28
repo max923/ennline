@@ -1,7 +1,6 @@
 import firebase from 'firebase'
 import { isEmpty, get } from 'lodash'
-import { getConfig } from '../utils'
-import calcRandom from '../utils/calcRandom'
+import { getConfig, calcRandom } from '../utils'
 import { _self, Snapshot, Vocabulary } from './interface'
 import today from './helper/today'
 /**
@@ -176,6 +175,8 @@ function createFirsebase() {
   /**
    * Init firsebase
   */
+ console.log('createFirsebase', getConfig(process));
+ 
   firebase.initializeApp(getConfig(process).Firsebase);
   const db = firebase.database();
 

@@ -35,6 +35,8 @@ function getConfig(process: any): {
       storageBucket,
       messagingSenderId,
     } = process.env
+    console.log('getConfig', process.env);
+    
     const config = {
       Line: {
         channelId,
