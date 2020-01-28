@@ -22,6 +22,7 @@ function getConfig(process: any): {
   Api: ApiConfig,
   Firsebase: FirsebaseConfig,
 }{
+  console.log('getConfig', process.env);
   if(process.NODE_ENV === 'production') {
     const {
       channelId,
@@ -35,7 +36,6 @@ function getConfig(process: any): {
       storageBucket,
       messagingSenderId,
     } = process.env
-    console.log('getConfig', process.env);
     
     const config = {
       Line: {
