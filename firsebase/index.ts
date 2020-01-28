@@ -174,10 +174,8 @@ function setNewWord(
 function createFirsebase() {
   /**
    * Init firsebase
-  */
- console.log('createFirsebase', getConfig(process));
- 
-  firebase.initializeApp(getConfig(process).Firsebase);
+  */ 
+  firebase.initializeApp(getConfig().Firsebase);
   const db = firebase.database();
 
   return function(userId: string) {

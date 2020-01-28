@@ -7,7 +7,7 @@ function definition(word: string): Promise<{
   try {
     return (
       request
-      .get(`${getConfig(process).Api.domain}/api/definition?word=${word}`)
+      .get(`${getConfig().Api.domain}/api/definition?word=${word}`)
       .then(({ body }) => body)
       .catch(() => null)
     )
@@ -25,7 +25,7 @@ function search(word: string): Promise<{
   try {
     return (
       request
-      .get(`${getConfig(process).Api.domain}/api/search?word=${word}`)
+      .get(`${getConfig().Api.domain}/api/search?word=${word}`)
       .then(({ body }) => body)
       .catch(() => null)
     )

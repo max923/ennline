@@ -17,13 +17,12 @@ interface LineConfig {
   channelAccessToken: string,
 }
 
-function getConfig(process: any): {
+function getConfig(process?: any): {
   Line: LineConfig,
   Api: ApiConfig,
   Firsebase: FirsebaseConfig,
 }{
-  console.log('getConfig', process.env);
-  if(process.NODE_ENV === 'production') {
+  if(process.env.NODE_ENV === 'production') {
     const {
       channelId,
       channelSecret,
