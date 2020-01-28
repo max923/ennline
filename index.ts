@@ -6,36 +6,8 @@ import { get, isNil, isEmpty } from 'lodash'
 import replyMessageTemplate from './replyMessage'
 import firsebase from './firsebase/index'
 import fetch from './helper/fetch'
-import { calcRandom, paramsToObject } from './utils/index'
+import { calcRandom, paramsToObject, getConfig } from './utils'
 import messageMotion from './const'
-
-function getConfig(process: any): {
-  Line: {
-    channelId: string,
-    channelSecret: string,
-    channelAccessToken: string,
-  }
-}{
-  if(process.NODE_ENV === 'production') {
-    const {channelId, channelSecret, channelAccessToken} = process.env
-    const config = {
-      Line: {
-        channelId,
-        channelSecret,
-        channelAccessToken,
-      }
-    }
-    return config
-  }
-  return {
-    Line: {
-      channelId: '',
-      channelSecret: '',
-      channelAccessToken: ''
-    }
-  }
-}
-
 
 // create Express app
 const app = express();
