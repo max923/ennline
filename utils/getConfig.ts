@@ -21,7 +21,7 @@ function getConfig(process?: any): {
   Line: LineConfig,
   Api: ApiConfig,
   Firsebase: FirsebaseConfig,
-}{
+}{  
   if(process.env.NODE_ENV === 'production') {
     const {
       channelId,

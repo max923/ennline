@@ -12,7 +12,7 @@ import messageMotion from './const'
 // create Express app
 const app = express();
 const store = createStore(reducers)
-const config = getConfig()
+const config = getConfig(process)
 
 app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
   // req.body.events should be an array of events

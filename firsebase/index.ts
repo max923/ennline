@@ -175,7 +175,7 @@ function createFirsebase() {
   /**
    * Init firsebase
   */ 
-  firebase.initializeApp(getConfig().Firsebase);
+  firebase.initializeApp(getConfig(process).Firsebase);
   const db = firebase.database();
 
   return function(userId: string) {
