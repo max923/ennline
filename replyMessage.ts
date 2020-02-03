@@ -2,102 +2,15 @@ import compose from './utils/compose'
 import { TextMessage, ImageMessage, AudioMessage } from '@line/bot-sdk'
 import { get, isEmpty } from 'lodash'
 
-interface Node {
+
+interface Node{
   word: string,
-  reply: object[]
-}
-
-const ButtonType = (createButton: Function) => <T>(node: T) => {
-  const previous = get(node, 'reply', [])
-  return Object.assign({}, node, {reply: [...previous, createButton(node)]})
-}
-
-const TextType = (createText: Function) => <T>(node: T) => {
-  const previous = get(node, 'reply', [])
-  return Object.assign({}, node, {
-    reply: [...previous, createText(node)]
-  })
+  zhTW: string,
+  reply: Object[],
 }
 
 const singleText = (text: string): object =>({ type: 'text', text: text })
 
-const handleImage = <T>(node: T): ImageMessage | T => {
-  const previous = get(node, 'reply', [])
-  const picUrl = get(node, 'picture.url', '')
-  return !isEmpty(picUrl) ? Object.assign({}, node, {reply: [...previous, {
-    "type": "image",
-    "originalContentUrl": picUrl,
-    "previewImageUrl": picUrl
-  }]}) : node
-}
-
-const handleTranslate = <T>(node: T): T | TextMessage => {
-  const previous = get(node, 'reply', [])
-  const zhTW = get(node, 'translate.zhTW', '')
-  return !isEmpty(zhTW) ? Object.assign({} ,node, {reply: [...previous, {
-    "type": "text",
-    "text": zhTW,
-  }]}) : node
-}
-
-const handleDescription =  <T>(node: T): T | TextMessage => {
-  const previous = get(node, 'reply', [])
-  const description = get(node, 'description', '')
-  return !isEmpty(description) ? Object.assign({}, node, {reply: [...previous, {
-    "type": "text",
-    "text": description,
-  }]}) : node
-}
-
-const handleExample = <T>(node: T): T | TextMessage => {
-  const previous = get(node, 'reply', [])
-  const examples = get(node, 'ex', [])
-  return !isEmpty(examples) ? Object.assign({}, node, {reply: [...previous, {
-    "type": "text",
-    "text": `Ex: ${examples[0]}\nEx: ${examples[1]}`,
-  }]}) : node
-}
-
-const handleAudio =  <T>(node: T): T | AudioMessage => {
-  const previous = get(node, 'reply', [])
-  const url = get(node, 'audio.url', '')
-  return !isEmpty(url) ? Object.assign({}, node, {reply: [...previous, {
-    "type": "audio",
-    "originalContentUrl": get(node, 'audio.url', ''),
-    "duration": 6000,
-  }]}) : node
-}
-
-const handleBlandFill = <T>(node: T): T | TextMessage => {
-  const previous = get(node, 'reply', [])
-  const word = get(node, 'word', '')
-  if(isEmpty(word)) return node
-  const blandText = word.split('').reduce((a: string, b: string, i: number): string => i > 1 ? a + ' _ ' : a + b, '')
-  return Object.assign({}, node, {reply: [...previous, {
-    "type": "text",
-    "text": blandText,
-  }]})
-}
-
-const createByFlexBox = <T>(node: T) => {
-  const previous = get(node, 'reply', [])
-  return Object.assign({}, node, {reply:{
-    type: 'flex',
-    altText: 'This is a flex message',
-    contents: {
-      "type": "bubble",
-      "size": "kilo",
-      "body": {
-        "type": "box",
-        "layout": "vertical",
-        "paddingAll": "8px",
-        "paddingStart": "15px",
-        "paddingEnd": "15px",
-        "contents": [...previous]
-      }
-    }
-  }})
-}
 const handleAddButton = (node: { word: string, zhTW: string }) => ({
   type: "button",
   style: "primary",
@@ -109,87 +22,144 @@ const handleAddButton = (node: { word: string, zhTW: string }) => ({
     data: `action=add&word=${node.word}&zhTW=${node.zhTW}`,
   }
 })
+const handleDailyQuizStartButton = () => ({
+  type: "button",
+  style: "primary",
+  margin: "sm",
+  height: "sm",
+  action: {
+    type: "postback",
+    label: 'Chick to start',
+    data: `action=dailyQuiz`,
+  }
+})
+
 const handleAddText = (node: Node) => ({
   type: "text",
   align: "center",
   text: node.word,
 })
 
+const handleFlexBox = (node: { reply:object[] }) => ({
+  type: 'flex',
+  altText: 'This is a flex message',
+  contents: {
+    "type": "bubble",
+    "size": "kilo",
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "paddingAll": "8px",
+      "paddingStart": "15px",
+      "paddingEnd": "15px",
+      "contents": [...node.reply]
+    }
+  }
+})
+
+const handleImage = (node: Node): ImageMessage | null => {
+  const url = get(node, 'picture.url', '')
+  return !isEmpty(url) ? {
+    "type": "image",
+    "originalContentUrl": url,
+    "previewImageUrl": url
+  } : null
+}
+
+const handleTranslate = (node: Node): TextMessage | null => {
+  const zhTW = get(node, 'translate.zhTW', '')
+  return !isEmpty(zhTW) ? {
+    "type": "text",
+    "text": zhTW,
+  } : null
+}
+
+const handleDescription =  (node: Node): TextMessage | null => {
+  const description = get(node, 'description', '')
+  return !isEmpty(description) ? {
+    "type": "text",
+    "text": description,
+  } : null
+}
+
+const handleExample = (node: Node): TextMessage | null => {
+  const examples = get(node, 'ex', [])
+  return !isEmpty(examples) ? {
+    "type": "text",
+    "text": `Ex: ${examples[0]}\nEx: ${examples[1]}`,
+  } : null
+}
+
+const handleBlandFill = (node: Node): TextMessage | null => {
+  const word = get(node, 'word', '')
+  return !isEmpty(word) ? {
+    "type": "text",
+    "text": word.split('').reduce((a: string, b: string, i: number): string => i > 1 ? a + ' _ ' : a + b, ''),
+  } : null
+}
+
+const handleAudio = (node: Node): AudioMessage | null => {
+  const url = get(node, 'audio.url', '')
+  return !isEmpty(url) ? {
+    "type": "audio",
+    "originalContentUrl": url,
+    "duration": 6000,
+  } : null
+}
+
+const replyPipe = (createMessage: Function) => <T>(node: T) => {
+  const previous = get(node, 'reply', [])
+  return createMessage(node) ? Object.assign({}, node, {reply: [...previous, createMessage(node)]})
+    : node
+}
+
+const ButtonType = compose(replyPipe)
+const TextType = compose(replyPipe)
+const ImageType = compose(replyPipe)
+const AudioType = compose(replyPipe)
+const createFlexBoxType = compose(handleFlexBox)
+
 function Message(): {
   question: Function,
   detail: Function,
   singleText: Function,
-  dailyQuiz: Function,
+  dailyQuiz: {
+    start: Function
+  },
   add: Function,
 } {
   const question = <T>(node: T): T => compose(
-    handleImage,
-    handleTranslate,
-    handleBlandFill,
-    handleAudio
+    ImageType(handleImage),
+    TextType(handleTranslate),
+    TextType(handleBlandFill),
+    AudioType(handleAudio)
   )(node)
 
   const detail = <T>(node: T): T => compose(
-    handleImage,
-    handleDescription,
-    handleExample,
-    handleTranslate,
-    handleAudio
-  )(node)
-
-  const dailyQuiz = <T>(node: T): T => compose(
-    handleTranslate,
-    handleBlandFill,
+    ImageType(handleImage),
+    TextType(handleTranslate),
+    TextType(handleDescription),
+    ImageType(handleExample),
+    AudioType(handleAudio)
   )(node)
   
   const add = <T>(node: T): T => compose(
     TextType(handleAddText),
     ButtonType(handleAddButton),
-    createByFlexBox,
+    createFlexBoxType,
   )(node)
 
   return {
     question,
     detail,
     singleText,
-    dailyQuiz,
+    dailyQuiz: {
+      start: () => compose(
+          ButtonType(handleDailyQuizStartButton),
+          createFlexBoxType
+        )({})
+    },
     add,
   }
 }
 export default Message()
-
-// const flexCompositon= () => {
-//   return {
-//     type: 'flex',
-//     altText: 'This is a flex message',
-//     contents: {
-//       "type": "bubble",
-//       "size": "kilo",
-//       "body": {
-//         "type": "box",
-//         "layout": "vertical",
-//         "paddingAll": "8px",
-//         "paddingStart": "15px",
-//         "paddingEnd": "15px",
-//         "contents": [
-//           {
-//             type: 'text',
-//             text: 'abandon',
-//             align: 'center',
-//           },
-//           {
-//             "type": "button",
-//             "style": "primary",
-//             "margin": "sm",
-//             "height": "sm",
-//             "action": {
-//               "type": "uri",
-//               "label": "Click to add",
-//               "uri": "https://example.com"
-//             }
-//           },
-//         ]
-//       }
-//     }
-//   }
-// }
