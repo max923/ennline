@@ -57,13 +57,13 @@ function getConfig(process?: any): {
     return config
   }
   return {
+    Api: {
+      domain: ''
+    },
     Line: {
       channelId: '',
       channelSecret: '',
       channelAccessToken: ''
-    },
-    Api: {
-      domain: '',
     },
     Firsebase: {
       apiKey: '',

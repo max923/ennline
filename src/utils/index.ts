@@ -1,11 +1,11 @@
 import calcRandom from './calcRandom'
 import compose from './compose'
 import paramsToObject from './paramsToObject'
-import getConfig from './getConfig'
+import today from './today'
 
 export {
   calcRandom,
   compose,
   paramsToObject,
-  getConfig
+  today
 }

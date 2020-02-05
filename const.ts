@@ -1,7 +1,7 @@
 enum messageMotion {
   random = '抽',
   search = '@search',
-  dailyQuiz = '@dailyQuiz',
+  dailyQuiz = '@quiz',
 }
 
 export default messageMotion

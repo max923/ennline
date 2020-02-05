@@ -6,13 +6,18 @@ export interface _self {
   getRandomNode: Function,
   getSetting: Function,
   getNodeValueByWord: Function,
+  getUserDailyQuiz: Function,
   setUserDailyQuiz: Function,
+  isExpiredDailyQuiz: Function,
+  updateUserDailyQuiz: Function,
 }
 export interface Snapshot{
-  val(): {
-    [key: string]: any
-  },
+  val(): any,
   numChildren(): number,
+  ref: {
+    update: Function,
+    push: Function
+  }
 }
 export interface Vocabulary {
   word: string,
@@ -20,4 +25,10 @@ export interface Vocabulary {
   examples: string[],
   zhTW: string,
   voice: string,
+}
+export interface DailyQuiz {
+  currentNum: number,
+  date?: string,
+  mistakes: string[],
+  questions: Vocabulary[],
 }

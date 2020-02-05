@@ -1,8 +1,8 @@
 import firebase from 'firebase'
-import { isEmpty, get } from 'lodash'
-import { getConfig, calcRandom } from '../utils'
-import { _self, Snapshot, Vocabulary } from './interface'
-import today from './helper/today'
+import { isEmpty } from 'lodash'
+import { calcRandom, today } from '../src/utils'
+import { getConfig } from '../helper'
+import { _self, Snapshot, Vocabulary, DailyQuiz } from '../src/type'
 /**
  * Check the user whether is in the DB
 */
@@ -22,6 +22,20 @@ function isUserExist(
   }
   const result = async () => !isEmpty(await getUserNodeValue())
   return result()
+}
+
+function getUserDailyQuiz(
+  this: _self,
+):Promise<DailyQuiz> {  
+  return new Promise((resolve, reject) => {
+    try {
+      this.db.ref(`/dailyQuiz/${this.userId}`).once('value', (snapshot: Snapshot) => {
+        resolve(snapshot.val())
+      });
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 
 function getNodeValueByWord(
@@ -99,51 +113,63 @@ function getRandomNode(
     oneWeight: getByOneWeight
   }
 }
+function updateUserDailyQuiz(
+  this: _self,
+  data: any
+): Promise<DailyQuiz>{
+  return new Promise((resolve, reject) => {
+    try {
+      this.db.ref(`/dailyQuiz/${this.userId}`).once('value', (snapshot: Snapshot) => {
+        snapshot.ref.update(data, () => {
+          resolve(this.getUserDailyQuiz())
+        })
+      });
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 /**
  * Set the user daily quiz
  */
 function setUserDailyQuiz(
   this: _self,
-):Promise<any>{
+  quantity: number
+):Promise<DailyQuiz>{  
   const todayQuestions = (count: number) => {
     const nodeList = calcRandom(count).map(num => num === 0 ? this.getRandomNode().overWeightNode(): this.getRandomNode().oneWeight())
     return Promise.all(nodeList)
   }
-  const todayQuizData = async (date: string) => {
+  const todayQuizData = async (quantity: number) => {
     return {
-      [date]: {
-        questions: await todayQuestions(20),
-        currentNum: 0,
-        score: 0
-      }
+      currentNum: 0,
+      date: today(),
+      mistakes: [''],
+      questions: await todayQuestions(quantity),
     }
   }
   return new Promise(async (resolve, reject) => {
     try {
-      this.db.ref(`/dailyQuiz/${this.userId}`).set(await todayQuizData(today()), function() {
-        resolve(todayQuizData(today()))
+      this.db.ref(`/dailyQuiz/${this.userId}`).set(await todayQuizData(quantity), function(snapshot: Snapshot) {
+        resolve(todayQuizData(quantity))
       })
     } catch (error) {
       reject(error)
     }
   })
 }
-function isDailyQuizExist(
+function isExpiredDailyQuiz(
   this: _self,
 ):Promise<boolean> {
-  const getUserDailyQuizValue = () => {
-    return new Promise((resolve, reject) => {
-      try {
-        this.db.ref(`/dailyQuiz/${this.userId}/${today()}`).once('value', (snapshot: Snapshot) => {
-          resolve(snapshot.val())
-        });
-      } catch (error) {
-        reject(error)
-      }
-    })
-  }
-  const result = async () => !isEmpty(await getUserDailyQuizValue())
-  return result()
+  return new Promise((resolve, reject) => {
+    try {
+      this.db.ref(`/dailyQuiz/${this.userId}`).once('value', (snapshot: Snapshot) => {
+        resolve(snapshot.val() && snapshot.val().date !== today())
+      });
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 function setNewWord(
   this: _self,
@@ -187,10 +213,12 @@ function createFirsebase() {
       isUserExist,
       getNodeValueByWord,
       getSetting,
+      getUserDailyQuiz,
       getRandomNode,
-      isDailyQuizExist,
+      isExpiredDailyQuiz,
       setUserDailyQuiz,
       setNewWord,
+      updateUserDailyQuiz
     }
   }
 }

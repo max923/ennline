@@ -3,10 +3,10 @@ import { Client, middleware } from '@line/bot-sdk'
 import { createStore } from 'redux'
 import reducers, { actionType } from './reducers/index'
 import { get, isNil, isEmpty } from 'lodash'
-import replyMessageTemplate from './replyMessage'
+import replyMessageTemplate from './src/message'
 import firsebase from './firsebase/index'
-import fetch from './helper/fetch'
-import { calcRandom, paramsToObject, getConfig } from './utils'
+import { fetch, getConfig } from './helper'
+import { calcRandom, paramsToObject } from './src/utils'
 import messageMotion from './const'
 
 // create Express app
@@ -72,6 +72,8 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
         const node = await getRandomNode(setting.mode) as { word: string }
         return node
       }
+
+      const isCorrectAnswer = (a: string, b: string): boolean => a === b
       /**
        * Handle by postback 
        */
@@ -85,6 +87,43 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
                 : client.replyMessage(replyToken, replyMessageTemplate.singleText('Fail'))
             }
             break;
+          case 'dailyQuiz':
+            const quizQuantity = 5
+            const isExpiredDailyQuiz = await db.isExpiredDailyQuiz()
+            const { currentNum, questions } = isExpiredDailyQuiz ? await db.setUserDailyQuiz(quizQuantity) : await db.getUserDailyQuiz()
+            // Step - > exit            
+            if(postback.step === 'exit') {
+              store.dispatch({ type: actionType.resetDailyQuiz })
+              return client.replyMessage(replyToken, replyMessageTemplate.singleText('Success'))
+            }
+            // Step - > start
+            if(postback.step === 'start') {
+              store.dispatch({ type: actionType.setDailyQuizStatus })
+              store.dispatch({ type: actionType.updateQuestion, payload: questions[currentNum] })
+              return client.replyMessage(
+                replyToken,
+                [replyMessageTemplate.singleText(`Q${currentNum + 1}: `)].concat(replyMessageTemplate.question(questions[currentNum]).reply)
+              )
+            } 
+            // Step - > next
+            if(postback.step === 'next') {
+              const nextQuestion = await db.updateUserDailyQuiz({
+                currentNum: currentNum + 1,
+              })
+              if(nextQuestion.currentNum === quizQuantity) {
+                store.dispatch({ type: actionType.resetDailyQuiz })
+                db.updateUserDailyQuiz({
+                  currentNum: 0,
+                })
+                return client.replyMessage(replyToken, replyMessageTemplate.singleText('恭喜完成測驗'))
+              } 
+              store.dispatch({ type: actionType.updateQuestion, payload: nextQuestion.questions[nextQuestion.currentNum] })
+              return client.replyMessage(
+                replyToken,
+                [replyMessageTemplate.singleText(`Q${nextQuestion.currentNum + 1}: `)].concat(replyMessageTemplate.question(nextQuestion.questions[nextQuestion.currentNum]).reply)
+              )
+            }
+            break;
         }
         
       }
@@ -93,31 +132,51 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
       */
       switch (state.user.status) {
         case 'search':
+          // Reset status while is searching already.
           store.dispatch({ type: actionType.resetStatus })
           const { isHave, node } = await getSearchNode(message)
           if(isHave) return  client.replyMessage(replyToken, replyMessageTemplate.detail(node).reply)
           return isEmpty(node.zhTW) ? client.replyMessage(replyToken, replyMessageTemplate.singleText('抱歉 查無此單字'))
             : client.replyMessage(replyToken, [replyMessageTemplate.singleText(node.zhTW), replyMessageTemplate.add(node).reply])
+        case 'dailyQuiz':
+          if(get(state, 'question.word')) {
+            store.dispatch({ type: actionType.resetQuestion })
+            // Correct respond
+            if(isCorrectAnswer(get(state, 'question.word'), message)) return client.replyMessage(replyToken,[
+              replyMessageTemplate.singleText('✅ Bingo 🎉'),
+              replyMessageTemplate.dailyQuiz.next().reply
+            ])
+            // Wrong respond
+            else {
+              return client.replyMessage(replyToken, [
+                replyMessageTemplate.singleText(`❎ Sorry, the answer is *${get(state, 'question.word')}* 😢`),
+                replyMessageTemplate.dailyQuiz.next().reply
+              ])
+            }
+          }
+          break;
         default:
+          store.dispatch({ type: actionType.resetStatus })
           break;
       }
       /**
        *  Handle by message
       */
-
       switch (message) {
         case messageMotion.random:
           const node = await getQuizQuestion()
-          store.dispatch({ type: actionType.updateWord, payload: node.word })
+          store.dispatch({ type: actionType.updateQuestion, payload: node })
           return client.replyMessage(replyToken, replyMessageTemplate.question(node).reply)
         case messageMotion.search:
           store.dispatch({ type: actionType.setSearchStatus })
           return client.replyMessage(replyToken, replyMessageTemplate.singleText('請輸入單字'))
+        case messageMotion.dailyQuiz:
+          return client.replyMessage(replyToken, replyMessageTemplate.dailyQuiz.start().reply)
         default:
-          if(state.word) {
-            store.dispatch({ type: actionType.resetWord })
-            if(state.word === message) return client.replyMessage(replyToken, replyMessageTemplate.singleText('✅ Bingo 🎉'))
-            if(state.word !== message) return client.replyMessage(replyToken, replyMessageTemplate.singleText(`❎ Sorry, the answer is *${state.word}* 😢`))
+          if(get(state, 'question.word')) {
+            store.dispatch({ type: actionType.resetQuestion })
+            if(isCorrectAnswer(get(state, 'question.word'), message))return client.replyMessage(replyToken, replyMessageTemplate.singleText('✅ Bingo 🎉'))
+            else return client.replyMessage(replyToken, replyMessageTemplate.singleText(`❎ Sorry, the answer is *${get(state, 'question.word')}* 😢`))
           }
           break;
       } 

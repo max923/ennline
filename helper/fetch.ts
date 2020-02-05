@@ -1,5 +1,5 @@
 import request from 'superagent'
-import { getConfig } from '../utils'
+import { getConfig } from '../helper'
 function definition(word: string): Promise<{
   word: string,
   zhTW: string,

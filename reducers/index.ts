@@ -1,20 +1,22 @@
 import { combineReducers } from 'redux'
+import { Vocabulary } from '../src/type'
 export enum actionType {
-  updateWord = 'UPDATEWORD',
-  resetWord = 'RESETWORD',
+  updateQuestion = 'UPDATEQUESTION',
+  resetQuestion = 'RESETQUESTION',
   enableUser = 'ENABLEUSER',
   setSearchStatus = 'SETSEARCHSTATUS',
   setDailyQuizStatus = 'SETDAILYQUIZSTATUS',
-  updateDailyQuizNum = 'UPDATEDAILYQUIZNUM',
-  updatDailyQuizWord = 'UPDATEDAILYQUIZWORD',
+  updateDailyQuiz = 'UPDATEDAILYQUIZ',
+  resetDailyQuiz = 'RESETDAILYQUIZ',
   resetStatus = 'RESETSTATUS'
 }
-const word = (state = '', action: { type: string, payload?: string }): string =>{
+const question = (state = {}, action: { type: string, payload?: Vocabulary }): Vocabulary | object =>{
   switch (action.type) {
-    case 'UPDATEWORD':
-      return action.payload || ''
-    case 'RESETWORD':
-      return ''
+    case 'UPDATEQUESTION':
+      return action.payload || {}
+    case 'RESETQUESTION':
+    case 'RESETDAILYQUIZ':
+      return state
     default:
       return state
   }
@@ -34,24 +36,25 @@ const user = (state={ enabled: false, status: '' }, action: { type: string, payl
     case 'SETDAILYQUIZSTATUS':
         return Object.assign(state, { status: 'dailyQuiz' })
     case 'RESETSTATUS':
+    case 'RESETDAILYQUIZ':
         return Object.assign(state, { status: '' })
     default:
       return state
   }
 }
-const quiz = (state={ num: 0, word: '' }, action: { type: string, payload?: string }): any => {
+const quiz = (state={ currentNum: 0, mistakes: [] }, action: { type: string, payload?: object }): any => {
   switch (action.type) {
-    case 'UPDATEDAILYQUIZNUM':
-      return Object.assign(state, { num: state.num + 1 })
-    case 'UPDATEDAILYQUIZWORD':
-      return Object.assign(state, { word: action.payload })
+    case 'UPDATEDAILYQUIZ':      
+      return Object.assign(state, action.payload)
+    case 'RESETDAILYQUIZ':
+      return state
     default:
       return state
   }
 }
 
 export default combineReducers({
-  word,
+  question,
   user,
   quiz
 })
