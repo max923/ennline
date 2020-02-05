@@ -39,6 +39,7 @@ function Message(): {
   add: Function,
 } {
   const question = <T>(node: T): T => compose(
+    ImageType(respondImage),
     TextType(respondTranslate),
     TextType(respondBlandFill),
     AudioType(respondAudio)
