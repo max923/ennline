@@ -39,6 +39,12 @@ const respondAddText = (node: Node) => ({
   text: node.word,
 })
 
+const respondBingoText = (node: Node) => ({
+  type: "text",
+  align: "center",
+  text: "✅ Bingo 🎉",
+})
+
 const respondFlexBox = (node: { reply:object[] }) => ({
   reply: {
     type: 'flex',
@@ -87,7 +93,7 @@ const respondExample = (node: Node): TextMessage | null => {
   const examples = get(node, 'ex', [])
   return !isEmpty(examples) ? {
     "type": "text",
-    "text": `Ex: ${examples[0]}\nEx: ${examples[1]}`,
+    "text": `Ex: ${examples[0] || ''}\n\nEx: ${examples[1] || ''}`,
   } : null
 }
 
@@ -146,4 +152,5 @@ export {
   respondAudio,
   respondNextQButton,
   respondExitQButton,
+  respondBingoText,
 }

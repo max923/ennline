@@ -13,7 +13,8 @@ import {
   respondBlandFill,
   respondAudio,
   respondNextQButton,
-  respondExitQButton
+  respondExitQButton,
+  respondBingoText
 } from './reply'
 
 const replyPipe = (createMessage: Function) => <T>(node: T) => {
@@ -34,7 +35,8 @@ function Message(): {
   singleText: Function,
   dailyQuiz: {
     start: Function,
-    next: Function
+    next: Function,
+    correct: Function
   },
   add: Function,
 } {
@@ -49,7 +51,7 @@ function Message(): {
     ImageType(respondImage),
     TextType(respondTranslate),
     TextType(respondDescription),
-    ImageType(respondExample),
+    TextType(respondExample),
     AudioType(respondAudio)
   )(node)
   
@@ -73,7 +75,11 @@ function Message(): {
         ButtonType(respondNextQButton),
         ButtonType(respondExitQButton),
         createFlexBoxType
-      )({})
+      )({}),
+      correct: <T>(node: T): T => compose(
+        TextType(respondExample),
+        TextType(respondBingoText),
+      )(node)
     },
     add,
   }

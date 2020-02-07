@@ -10,6 +10,7 @@ export interface _self {
   setUserDailyQuiz: Function,
   isExpiredDailyQuiz: Function,
   updateUserDailyQuiz: Function,
+  updateValueByAll: Function,
 }
 export interface Snapshot{
   val(): any,

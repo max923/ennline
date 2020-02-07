@@ -142,10 +142,10 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
           if(get(state, 'question.word')) {
             store.dispatch({ type: actionType.resetQuestion })
             // Correct respond
-            if(isCorrectAnswer(get(state, 'question.word'), message)) return client.replyMessage(replyToken,[
-              replyMessageTemplate.singleText('✅ Bingo 🎉'),
-              replyMessageTemplate.dailyQuiz.next().reply
-            ])
+            if(isCorrectAnswer(get(state, 'question.word'), message)) return client.replyMessage(replyToken,
+              replyMessageTemplate.dailyQuiz.correct(state.question).reply
+              .concat( replyMessageTemplate.dailyQuiz.next().reply)
+            )
             // Wrong respond
             else {
               return client.replyMessage(replyToken, [
@@ -164,7 +164,7 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
       */
       switch (message) {
         case messageMotion.random:
-          const node = await getQuizQuestion()
+          const node = await getQuizQuestion()          
           store.dispatch({ type: actionType.updateQuestion, payload: node })
           return client.replyMessage(replyToken, replyMessageTemplate.question(node).reply)
         case messageMotion.search:
