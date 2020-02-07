@@ -39,11 +39,30 @@ const respondAddText = (node: Node) => ({
   text: node.word,
 })
 
-const respondBingoText = (node: Node) => ({
+const respondBingoText = () => ({
   type: "text",
   align: "center",
   text: "✅ Bingo 🎉",
 })
+
+const respondMistakeText = (node: Node) => ({
+  type: "text",
+  align: "center",
+  text: `❎ Sorry, the answer is *${node.word}* 😢`,
+})
+
+const respondFinishText = () => ({
+  type: "text",
+  align: "center",
+  text: '恭喜完成測驗',
+})
+
+const respondFinishMistakes = (node: { mistakes: string[] }) => ({
+  type: "text",
+  align: "center",
+  text: `答錯單字: ${[...new Set(Object.values(node.mistakes))]}`,
+})
+
 
 const respondFlexBox = (node: { reply:object[] }) => ({
   reply: {
@@ -128,7 +147,7 @@ const respondNextQButton = () => ({
 
 const respondExitQButton = () => ({
   type: "button",
-  style: "primary",
+  style: "secondary",
   margin: "sm",
   height: "sm",
   action: {
@@ -153,4 +172,7 @@ export {
   respondNextQButton,
   respondExitQButton,
   respondBingoText,
+  respondMistakeText,
+  respondFinishText,
+  respondFinishMistakes
 }

@@ -112,10 +112,12 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
               })
               if(nextQuestion.currentNum === quizQuantity) {
                 store.dispatch({ type: actionType.resetDailyQuiz })
+                const dailyQuiz = await db.getUserDailyQuiz()
                 db.updateUserDailyQuiz({
                   currentNum: 0,
+                  mistakes: []
                 })
-                return client.replyMessage(replyToken, replyMessageTemplate.singleText('恭喜完成測驗'))
+                return client.replyMessage(replyToken, replyMessageTemplate.dailyQuiz.finish(dailyQuiz).reply)
               } 
               store.dispatch({ type: actionType.updateQuestion, payload: nextQuestion.questions[nextQuestion.currentNum] })
               return client.replyMessage(
@@ -144,14 +146,15 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
             // Correct respond
             if(isCorrectAnswer(get(state, 'question.word'), message)) return client.replyMessage(replyToken,
               replyMessageTemplate.dailyQuiz.correct(state.question).reply
-              .concat( replyMessageTemplate.dailyQuiz.next().reply)
+              .concat(replyMessageTemplate.dailyQuiz.next().reply)
             )
             // Wrong respond
             else {
-              return client.replyMessage(replyToken, [
-                replyMessageTemplate.singleText(`❎ Sorry, the answer is *${get(state, 'question.word')}* 😢`),
-                replyMessageTemplate.dailyQuiz.next().reply
-              ])
+              await db.pushUserDailyQuizMistakes(get(state.question, 'word', ''))
+              return client.replyMessage(replyToken,
+                replyMessageTemplate.dailyQuiz.wrong(state.question).reply
+                .concat(replyMessageTemplate.dailyQuiz.next().reply)
+              )
             }
           }
           break;

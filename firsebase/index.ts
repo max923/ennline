@@ -129,6 +129,39 @@ function updateUserDailyQuiz(
     }
   })
 }
+
+function pushUserDailyQuizMistakes(
+  this: _self,
+  data: string
+) {
+  return new Promise((resolve, reject) => {
+    try {
+      this.db.ref(`/dailyQuiz/${this.userId}/mistakes`).once('value', (snapshot: Snapshot) => {
+        snapshot.ref.push(data, () => {
+          resolve('SUCCESS')
+        })
+      });
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+function updateValueByAll(
+  this: _self,
+):Promise<any> {
+  return new Promise((resolve, reject) => {
+    try {
+      this.db.ref("/" + this.userId).once('value', (snapshot: any) => {
+        snapshot.forEach(function (snapshot1: Snapshot) {
+
+        })
+      });
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 /**
  * Set the user daily quiz
  */
@@ -218,7 +251,9 @@ function createFirsebase() {
       isExpiredDailyQuiz,
       setUserDailyQuiz,
       setNewWord,
-      updateUserDailyQuiz
+      updateUserDailyQuiz,
+      pushUserDailyQuizMistakes,
+      updateValueByAll,
     }
   }
 }

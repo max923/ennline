@@ -14,7 +14,10 @@ import {
   respondAudio,
   respondNextQButton,
   respondExitQButton,
-  respondBingoText
+  respondBingoText,
+  respondMistakeText,
+  respondFinishText,
+  respondFinishMistakes
 } from './reply'
 
 const replyPipe = (createMessage: Function) => <T>(node: T) => {
@@ -36,7 +39,9 @@ function Message(): {
   dailyQuiz: {
     start: Function,
     next: Function,
-    correct: Function
+    correct: Function,
+    wrong: Function,
+    finish: Function
   },
   add: Function,
 } {
@@ -79,7 +84,15 @@ function Message(): {
       correct: <T>(node: T): T => compose(
         TextType(respondExample),
         TextType(respondBingoText),
-      )(node)
+      )(node),
+      wrong: <T>(node: T): T => compose(
+        TextType(respondExample),
+        TextType(respondMistakeText),
+      )(node),
+      finish: <T>(node: T): T => compose(
+        TextType(respondFinishMistakes),
+        TextType(respondFinishText),
+      )(node),
     },
     add,
   }
