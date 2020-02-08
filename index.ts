@@ -42,6 +42,7 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
       return client.replyMessage(replyToken, replyMessageTemplate.singleText('User is not found'))
     } else {
       store.dispatch({ type: actionType.enableUser })
+
       /**
        *  Search from dictionary
        */
@@ -52,6 +53,7 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
         }
         return { isHave: true, node }
       }
+
       /**
        *  Get the random node, according to user mode
       */
@@ -67,6 +69,18 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
         }
       }
 
+      /**
+       *  Caculate question updated weight
+      */
+      const calcUpdateWeight = (updatedNum: number) => (value: { weight: number }) => {
+        const updated = value.weight + updatedNum
+        if(updated > 0 && updated <=  3)  return { weight: updated }
+        else return { weight: value.weight }
+      }
+
+      /**
+       * Get a quiz question
+      */
       const getQuizQuestion = async () => {
         const setting = await db.getSetting() as { mode: string }
         const node = await getRandomNode(setting.mode) as { word: string }
@@ -88,7 +102,7 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
             }
             break;
           case 'dailyQuiz':
-            const quizQuantity = 30
+            const quizQuantity = 20
             const isExpiredDailyQuiz = await db.isExpiredDailyQuiz()
             const { currentNum, questions } = isExpiredDailyQuiz ? await db.setUserDailyQuiz(quizQuantity) : await db.getUserDailyQuiz()
             // Step - > exit            
@@ -127,7 +141,6 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
             }
             break;
         }
-        
       }
       /**
        *  Handle by status
@@ -144,12 +157,15 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
           if(get(state, 'question.word')) {
             store.dispatch({ type: actionType.resetQuestion })
             // Correct respond
-            if(isCorrectAnswer(get(state, 'question.word'), message)) return client.replyMessage(replyToken,
-              replyMessageTemplate.dailyQuiz.correct(state.question).reply
-              .concat(replyMessageTemplate.dailyQuiz.next().reply)
-            )
+            if(isCorrectAnswer(get(state, 'question.word'), message)) {
+              await db.updateWordNode(get(state, 'question.word'), calcUpdateWeight(-1))
+              return client.replyMessage(replyToken,
+                replyMessageTemplate.dailyQuiz.correct(state.question).reply
+                .concat(replyMessageTemplate.dailyQuiz.next().reply))
+            }
             // Wrong respond
             else {
+              await db.updateWordNode(get(state, 'question.word'), calcUpdateWeight(1))
               await db.pushUserDailyQuizMistakes(get(state.question, 'word', ''))
               return client.replyMessage(replyToken,
                 replyMessageTemplate.dailyQuiz.wrong(state.question).reply
@@ -178,8 +194,14 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
         default:
           if(get(state, 'question.word')) {
             store.dispatch({ type: actionType.resetQuestion })
-            if(isCorrectAnswer(get(state, 'question.word'), message))return client.replyMessage(replyToken, replyMessageTemplate.singleText('✅ Bingo 🎉'))
-            else return client.replyMessage(replyToken, replyMessageTemplate.singleText(`❎ Sorry, the answer is *${get(state, 'question.word')}* 😢`))
+            if(isCorrectAnswer(get(state, 'question.word'), message)) {
+              await db.updateWordNode(get(state, 'question.word'), calcUpdateWeight(-1))
+              return client.replyMessage(replyToken, replyMessageTemplate.singleText('✅ Bingo 🎉'))
+            }
+            else {
+              await db.updateWordNode(get(state, 'question.word'), calcUpdateWeight(1))
+              return client.replyMessage(replyToken, replyMessageTemplate.singleText(`❎ Sorry, the answer is *${get(state, 'question.word')}* 😢`))
+            }
           }
           break;
       } 

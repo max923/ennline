@@ -40,11 +40,11 @@ function getUserDailyQuiz(
 
 function getNodeValueByWord(
   this: _self,
-  vocabulary: string
+  word: string
 ):Promise<any> {
   return new Promise((resolve, reject) => {    
     try {
-      this.db.ref(`${this.userRootNode}/${vocabulary}`).once('value', (snapshot: Snapshot) => {
+      this.db.ref(`${this.userRootNode}/${word}`).once('value', (snapshot: Snapshot) => {
         resolve(snapshot.val())
       });
     } catch (error) {
@@ -147,14 +147,36 @@ function pushUserDailyQuizMistakes(
   })
 }
 
-function updateValueByAll(
+function updateWordNode(
   this: _self,
+  word: string,
+  callback: Function
+) {
+  return new Promise((resolve, reject) => {
+    try {
+      this.db.ref(`/${this.userId}/${word}`).once('value', (snapshot: any) => {
+        const updateData = callback(snapshot.val())
+        snapshot.ref.update(updateData, () => {
+          resolve(this.getNodeValueByWord(word))
+        })
+      });
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+function updateAllNode(
+  this: _self,
+  callback: Function
 ):Promise<any> {
   return new Promise((resolve, reject) => {
     try {
-      this.db.ref("/" + this.userId).once('value', (snapshot: any) => {
+      this.db.ref(`/${this.userId}`).once('value', (snapshot: any) => {
         snapshot.forEach(function (snapshot1: Snapshot) {
-
+          snapshot1.ref.update(callback(snapshot1.val()), () => {
+            resolve('SUCESS')
+          })
         })
       });
     } catch (error) {
@@ -251,9 +273,10 @@ function createFirsebase() {
       isExpiredDailyQuiz,
       setUserDailyQuiz,
       setNewWord,
-      updateUserDailyQuiz,
       pushUserDailyQuizMistakes,
-      updateValueByAll,
+      updateUserDailyQuiz,
+      updateAllNode,
+      updateWordNode,
     }
   }
 }

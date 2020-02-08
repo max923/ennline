@@ -60,7 +60,7 @@ const respondFinishText = () => ({
 const respondFinishMistakes = (node: { mistakes: string[] }) => ({
   type: "text",
   align: "center",
-  text: `答錯單字: ${[...new Set(Object.values(node.mistakes))]}`,
+  text: `答錯單字: *${[...new Set(Object.values(node.mistakes))]}*`,
 })
 
 
