@@ -16,7 +16,7 @@ const question = (state = {}, action: { type: string, payload?: Vocabulary }): V
       return action.payload || {}
     case 'RESETQUESTION':
     case 'RESETDAILYQUIZ':
-      return state
+      return {}
     default:
       return state
   }
@@ -47,7 +47,10 @@ const quiz = (state={ currentNum: 0, mistakes: [] }, action: { type: string, pay
     case 'UPDATEDAILYQUIZ':      
       return Object.assign(state, action.payload)
     case 'RESETDAILYQUIZ':
-      return state
+      return {
+        currentNum: 0,
+        mistakes: []
+      }
     default:
       return state
   }
