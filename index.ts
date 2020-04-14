@@ -102,7 +102,7 @@ app.post('/linewebhook', middleware(config.Line), (req: any, res: any) => {
             }
             break;
           case 'dailyQuiz':
-            const quizQuantity = 20
+            const quizQuantity = 15
             const isExpiredDailyQuiz = await db.isExpiredDailyQuiz()
             const { currentNum, questions } = isExpiredDailyQuiz ? await db.setUserDailyQuiz(quizQuantity) : await db.getUserDailyQuiz()
             // Step - > exit            
